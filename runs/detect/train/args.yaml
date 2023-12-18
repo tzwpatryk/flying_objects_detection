@@ -1,6 +1,6 @@
 task: detect
 mode: train
-model: runs_bs16_e5/detect/train/weights/last.pt
+model: runs/detect/train/weights/last.pt
 data: datasets/data.yaml
 epochs: 50
 patience: 20
