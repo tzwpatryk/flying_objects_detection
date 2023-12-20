@@ -38,7 +38,7 @@ while webcam:
     _, frame = camera.read()
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    results = model(frame)
+    results = model(frame, conf=0.3)
     img = show_results(results, revert=False)
 
     FRAME_WINDOW.image(img)
