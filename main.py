@@ -5,6 +5,7 @@ import cv2
 from PIL import Image
 from streamlit_webrtc import webrtc_streamer, ClientSettings
 import av
+from turn import get_ice_servers
 
 def show_results(results, revert=True):
     im_array = results[0].plot()
@@ -24,10 +25,10 @@ def video_frame_callback(frame):
 
     return img
 
-WEBRTC_CLIENT_SETTINGS = ClientSettings(
-    rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
-    media_stream_constraints={"video": True, "audio": False},
-    )
+# WEBRTC_CLIENT_SETTINGS = ClientSettings(
+#     rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+#     media_stream_constraints={"video": True, "audio": False},
+#     )
 
 
 model = YOLO("runs/detect/train/weights/last.pt")
@@ -43,6 +44,7 @@ if image is not None:
     img = show_results(results)
     st.image(img)
 
-webrtc_ctx = webrtc_streamer(key="snapshot", 
-                             client_settings=WEBRTC_CLIENT_SETTINGS, 
-                             video_frame_callback=video_frame_callback)
+webrtc_ctx = webrtc_streamer(key="object-detection-cam",
+                            rtc_configuration={"iceServers": get_ice_servers()},
+                            media_stream_constraints={"video": True, "audio": False},
+                            video_frame_callback=video_frame_callback)
