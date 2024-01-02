@@ -3,6 +3,8 @@ import numpy as np
 from ultralytics import YOLO
 import cv2
 from PIL import Image
+from streamlit_webrtc import webrtc_streamer, ClientSettings
+import av
 
 def show_results(results, revert=True):
     im_array = results[0].plot()
@@ -12,8 +14,21 @@ def show_results(results, revert=True):
         im = Image.fromarray(im_array)
     return im
 
+def video_frame_callback(frame):
+    # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    frame = frame.to_ndarray(format="bgr24")
+    results = model(frame, conf=0.3)
+    # img = show_results(results, revert=False)
+    im_array = results[0].plot()
+    img = av.VideoFrame.from_ndarray(im_array, format="bgr24")
 
-st.set_page_config(page_title='Flying objects detection using YOLOV8', layout='wide')
+    return img
+
+WEBRTC_CLIENT_SETTINGS = ClientSettings(
+    # rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+    media_stream_constraints={"video": True, "audio": False},
+    )
+
 
 model = YOLO("runs/detect/train/weights/last.pt")
 
@@ -28,19 +43,6 @@ if image is not None:
     img = show_results(results)
     st.image(img)
 
-with st.header("Enable webcam"):
-    webcam = st.checkbox("Run")
-
-FRAME_WINDOW = st.image([])
-camera = cv2.VideoCapture(0)
-
-while webcam:
-    _, frame = camera.read()
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-    results = model(frame, conf=0.3)
-    img = show_results(results, revert=False)
-
-    FRAME_WINDOW.image(img)
-else:
-    st.write('Stopped')
+webrtc_ctx = webrtc_streamer(key="snapshot", 
+                             client_settings=WEBRTC_CLIENT_SETTINGS, 
+                             video_frame_callback=video_frame_callback)
