@@ -19,7 +19,7 @@ def show_results(results, revert=True):
 
 def video_frame_callback(frame):
     frame = frame.to_ndarray(format="bgr24")
-    results = model(frame, conf=0.3)
+    results = model(frame, conf=conf)
     im_array = results[0].plot()
     img = av.VideoFrame.from_ndarray(im_array, format="bgr24")
 
@@ -27,17 +27,20 @@ def video_frame_callback(frame):
 
 model = YOLO("runs/detect/train/weights/last.pt")
 
-with st.header("Upload image"):
-    image = st.file_uploader("JPEG file:")
+conf = st.slider("Confidence value", min_value=0.1, max_value=0.9, value=0.3)
+
+st.header("Prediction on image")
+image = st.file_uploader("Upload image")
 
 if image is not None:
     img_bytes = np.asarray(bytearray(image.read()), dtype=np.uint8)
     opencv_image = cv2.imdecode(img_bytes, 1)
 
-    results = model(opencv_image)
+    results = model(opencv_image, conf=conf)
     img = show_results(results)
     st.image(img)
 
+st.header("Prediction on video")
 uploaded_video = st.file_uploader("Upload video", type="mp4")
 
 stframe = st.empty()
@@ -54,12 +57,13 @@ if uploaded_video is not None:
     while cap.isOpened():
         success, frame = cap.read()
         if success and frame_count%10==0:
-            results = model(frame)
+            results = model(frame, conf=conf)
             annotated_frame = results[0].plot()
             stframe.image(annotated_frame)
         frame_count += 1
     cap.release()
 
+st.header("Prediction on your webcam")
 webrtc_ctx = webrtc_streamer(key="object-detection-cam",
                             rtc_configuration={"iceServers": get_ice_servers()},
                             media_stream_constraints={"video": True, "audio": False},
