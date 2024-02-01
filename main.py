@@ -28,8 +28,8 @@ def video_frame_callback(frame):
     img = av.VideoFrame.from_ndarray(im_array, format="bgr24")
     return img
 
-# loading model with the best weights
-model = YOLO("runs/detect/train/weights/latest.pt")
+# loading model with the latest weights
+model = YOLO("runs/detect/train/weights/last.pt")
 
 # adding streamlit components
 conf = st.slider("Confidence value", min_value=0.1, max_value=0.9, value=0.5)
